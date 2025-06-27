@@ -10,8 +10,7 @@ cat.fantasia AS unidade,
 cata.nome AS associado,
 bx.valor_baixa, 
 CAST(bx.data_baixa AS date) AS data_baixa,
-CAST(tm.data_vencimento AS date) AS data_vencimento,
-DATE_DIFF('day', CAST(bx.data_baixa AS date), CAST(tm.data_vencimento AS date)) AS dias_atraso
+CAST(tm.data_vencimento AS date) AS data_vencimento
 
 FROM silver.titulo_movimento tm
 LEFT JOIN silver.titulo t ON t.ponteiro = tm.ponteiro
@@ -62,8 +61,7 @@ cat.fantasia AS unidade,
 cata.nome AS associado,
 bx.valor_baixa, 
 CAST(bx.data_baixa AS date) AS data_baixa,
-CAST(tm.data_vencimento AS date) AS data_vencimento,
-DATE_DIFF('day', CAST(bx.data_baixa AS date), CAST(tm.data_vencimento AS date)) AS dias_atraso
+CAST(tm.data_vencimento AS date) AS data_vencimento
 
 FROM stcoop.titulo_movimento tm
 LEFT JOIN stcoop.titulo t ON t.ponteiro = tm.ponteiro
@@ -113,8 +111,7 @@ cat.fantasia AS unidade,
 cata.nome AS associado,
 bx.valor_baixa, 
 CAST(bx.data_baixa AS date) AS data_baixa,
-CAST(tm.data_vencimento AS date) AS data_vencimento,
-DATE_DIFF('day', CAST(bx.data_baixa AS date), CAST(tm.data_vencimento AS date)) AS dias_atraso
+CAST(tm.data_vencimento AS date) AS data_vencimento
 
 FROM viavante.titulo_movimento tm
 LEFT JOIN viavante.titulo t ON t.ponteiro = tm.ponteiro
