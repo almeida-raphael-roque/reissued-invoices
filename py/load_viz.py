@@ -24,7 +24,7 @@ today = pd.Timestamp.today().date()
 day_offset_1 = today - pd.Timedelta(days=1)
 day_offset_2 = today - pd.Timedelta(days=2)
 day_offset_3 = today - pd.Timedelta(days=3)
-day_offset_4 = today - pd.Timedelta(days=3)
+day_offset_4 = today - pd.Timedelta(days=4)
 
 
 ws3.range('G4').value = day_offset_1
