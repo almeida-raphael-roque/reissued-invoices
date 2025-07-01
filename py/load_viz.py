@@ -1,90 +1,81 @@
-import xlwings as xw
-import pandas as pd
-
-wb1_path = r"C:\Users\raphael.almeida\Documents\Projetos\Boletos Reemitidos\boletos_reemitidos.xlsx"
-wb1 = xw.Book(wb1_path)
-ws1 = wb1.sheets['boletos_reemitidos_pagos']
-                 
-intervalo = ws1.range('A1').expand()
-
-dados = intervalo.value
-
-wb2_path = r"C:\Users\raphael.almeida\Documents\Projetos\Boletos Reemitidos\Boletos Reemitidos Pagos.xlsx"
-wb2 = xw.Book(wb2_path)
-ws2 = wb2.sheets['BASE']
-
-ws2.range('A1').value = dados
 
 
-ws3 = wb2.sheets['Boletos Reemitidos Pagos']
+class ETL_boletos_viz:
+    def ETL_boletos_viz():
 
-#atualizando datas
+        import xlwings as xw
+        import pandas as pd
 
-today = pd.Timestamp.today().date()
-day_offset_1 = today - pd.Timedelta(days=1)
-day_offset_2 = today - pd.Timedelta(days=2)
-day_offset_3 = today - pd.Timedelta(days=3)
-day_offset_4 = today - pd.Timedelta(days=4)
+        wb1_path = r"C:\Users\raphael.almeida\Documents\Processos\boletos_reemitidos\boletos_reemitidos.xlsx"
+        wb1 = xw.Book(wb1_path)
+        ws1 = wb1.sheets['boletos_reemitidos_pagos']
+        intervalo = ws1.range('A1').expand()
+        dados = intervalo.value
 
+        wb2_path = r"C:\Users\raphael.almeida\Documents\Processos\boletos_reemitidos\Boletos Reemitidos Pagos.xlsx"
+        wb2 = xw.Book(wb2_path)
+        ws2 = wb2.sheets['BASE']
+        ws2.clear_contents()
+        ws2.range('A1').value = dados
+        ws3 = wb2.sheets['Boletos Reemitidos Pagos']
 
-ws3.range('G4').value = day_offset_1
-ws3.range('F4').value = day_offset_2
-ws3.range('E4').value = day_offset_3
-ws3.range('D4').value = day_offset_4
+        today = pd.Timestamp.today().normalize()
+        day_offset_1 = today - pd.Timedelta(days=1)
+        day_offset_2 = today - pd.Timedelta(days=2)
+        day_offset_3 = today - pd.Timedelta(days=3)
+        day_offset_4 = today - pd.Timedelta(days=4)
 
-#atualizando células de pagamento
-base_values = ws2.range('A1').expand().value
+        ws3.range('E2').value = day_offset_4.date()
+        ws3.range('H2').value = day_offset_3.date()
+        ws3.range('K2').value = day_offset_2.date()
+        ws3.range('N2').value = day_offset_1.date()
 
-# Ajuste: usar a primeira linha como cabeçalho
-if base_values:
-    df = pd.DataFrame(base_values[1:], columns=base_values[0])
-else:
-    df = pd.DataFrame()
+        base_values = ws2.range('A1').expand().value
 
+        if base_values:
+            df = pd.DataFrame(base_values[1:], columns=base_values[0])
+        else:
+            df = pd.DataFrame()
 
+        listas_ponteiros_4 = df.loc[df['data_reemissao'] == day_offset_4, 'ponteiro'].tolist()
+        listas_ponteiros_3 = df.loc[df['data_reemissao'] == day_offset_3, 'ponteiro'].tolist()
+        listas_ponteiros_2 = df.loc[df['data_reemissao'] == day_offset_2, 'ponteiro'].tolist()
+        listas_ponteiros_1 = df.loc[df['data_reemissao'] == day_offset_1, 'ponteiro'].tolist()
 
-def calcular_pagamentos_por_empresa_e_dia(df, empresas, dias):
-    """
-    Calcula o total de pagamentos por empresa e por dia de reemissão.
+        def calcular_pagamentos_4dias_3empresas(df, listas_ponteiros, empresas):
+            resultados = {}
+            for idx, ponteiros in enumerate(listas_ponteiros, 1):
+                for empresa in empresas:
+                    soma = df.loc[
+                        (df['ponteiro'].isin(ponteiros)) &
+                        (df['empresa'] == empresa),
+                        'valor_baixa'
+                    ].sum()
+                    resultados[(empresa, idx)] = soma
+            return resultados
 
-    Args:
-        df (pd.DataFrame): DataFrame com os dados.
-        empresas (list): Lista de nomes das empresas.
-        dias (list): Lista de datas (datetime.date) para considerar.
+        listas_ponteiros = [listas_ponteiros_1, listas_ponteiros_2, listas_ponteiros_3, listas_ponteiros_4]
+        empresas = ['Segtruck', 'Stcoop', 'Viavante']
+        pagamentos = calcular_pagamentos_4dias_3empresas(df, listas_ponteiros, empresas)
 
-    Returns:
-        dict: {(empresa, dia): soma_pagamentos}
-    """
-    resultados = {}
-    for dia in dias:
-        lista_ponteiros = df.loc[df['data_reemissao'] == dia, 'ponteiro'].tolist()
-        for empresa in empresas:
-            soma = df.loc[
-                (df['ponteiro'].isin(lista_ponteiros)) &
-                (df['empresa'] == empresa),
-                'valor_baixa'
-            ].sum()
-            resultados[(empresa, dia)] = soma
-    return resultados
+        colunas = ['F', 'I', 'L', 'O']
+        linhas = {'Segtruck': 4, 'Stcoop': 5, 'Viavante': 6}
+        empresas = ['Segtruck', 'Stcoop', 'Viavante']
 
-lista_empresas = ['Segtruck', 'Stcoop', 'Viavante']
-dias_reemissao = [day_offset_1, day_offset_2, day_offset_3, day_offset_4]
+        for idx_col, coluna in enumerate(colunas):
+            idx_lista = 4 - idx_col
+            for empresa in empresas:
+                valor = pagamentos.get((empresa, idx_lista), 0)
+                linha = linhas[empresa]
+                ws3.range(f'{coluna}{linha}').value = valor
 
-pagamentos_por_empresa_e_dia = calcular_pagamentos_por_empresa_e_dia(df, lista_empresas, dias_reemissao)
+        wb2.save()
+        wb2.close()
+        wb1.close()
 
-# Mapeamento de colunas e linhas para cada empresa e dia
-colunas = ['F', 'H', 'J', 'L']  # F: offset 4, H: offset 3, J: offset 2, L: offset 1
-linhas = {'Segtruck': 6, 'Stcoop': 9, 'Viavante': 12}
+        wb2.save(r"C:\Users\raphael.almeida\OneDrive - Grupo Unus\analise de dados - Arquivos em excel\Relatório de Pagamento de Reemissões\Boletos Reemitidos Pagos.xlsx")
 
-for idx_dia, dia in enumerate(dias_reemissao):
-    for empresa in lista_empresas:
-        valor = pagamentos_por_empresa_e_dia.get((empresa, dia), 0)
-        coluna = colunas[idx_dia]
-        linha = linhas[empresa]
-        ws3.range(f'{coluna}{linha}').value = valor
+        print(f"Arquivo Excel salvo com sucesso no sharepoint")
 
-wb2.save()  
-wb2.close()
-
-wb1.close()
-
+if __name__ == '__main__':
+    ETL_boletos_viz.ETL_boletos_viz()
