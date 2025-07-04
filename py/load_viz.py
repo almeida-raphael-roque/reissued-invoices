@@ -5,6 +5,7 @@ class ETL_boletos_viz:
 
         import xlwings as xw
         import pandas as pd
+        import shutil
 
         wb1_path = r"C:\Users\raphael.almeida\Documents\Processos\boletos_reemitidos\boletos_reemitidos.xlsx"
         wb1 = xw.Book(wb1_path)
@@ -69,13 +70,17 @@ class ETL_boletos_viz:
                 linha = linhas[empresa]
                 ws3.range(f'{coluna}{linha}').value = valor
 
+        # saving and closing excel files
+        wb1.save()
+        wb1.close()
         wb2.save()
         wb2.close()
-        wb1.close()
+        save_sharepoint = r"C:\Users\raphael.almeida\OneDrive - Grupo Unus\analise de dados - Arquivos em excel\Relatório de Pagamento de Reemissões\Boletos Reemitidos Pagos.xlsx"
+        
+        shutil.copy(wb2_path, save_sharepoint)
 
-        wb2.save(r"C:\Users\raphael.almeida\OneDrive - Grupo Unus\analise de dados - Arquivos em excel\Relatório de Pagamento de Reemissões\Boletos Reemitidos Pagos.xlsx")
 
-        print(f"Arquivo Excel salvo com sucesso no sharepoint")
+        print(f"Arquivo Boletos Reemitidos Pagos salvo com sucesso em {save_sharepoint}")
 
 if __name__ == '__main__':
     ETL_boletos_viz.ETL_boletos_viz()

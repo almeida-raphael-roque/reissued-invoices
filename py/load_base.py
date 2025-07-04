@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="pandas")
 
 class ETL_boletos_base:
     def ETL_boletos():
