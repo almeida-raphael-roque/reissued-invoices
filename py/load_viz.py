@@ -26,10 +26,15 @@ class ETL_boletos_viz:
         day_offset_3 = today - pd.Timedelta(days=3)
         day_offset_4 = today - pd.Timedelta(days=4)
 
-        ws3.range('E2').value = day_offset_4.date()
-        ws3.range('H2').value = day_offset_3.date()
-        ws3.range('K2').value = day_offset_2.date()
-        ws3.range('N2').value = day_offset_1.date()
+        yesterday = day_offset_1.date()
+        dbf_yesterday = day_offset_2.date()
+        dbf_yesterday_2 = day_offset_3.date()
+        dbf_yesterday_3 = day_offset_4.date()
+
+        ws3.range('B16').value = day_offset_4.date()
+        ws3.range('B12').value = day_offset_3.date()
+        ws3.range('B8').value = day_offset_2.date()
+        ws3.range('B4').value = day_offset_1.date()
 
         base_values = ws2.range('A1').expand().value
 
@@ -43,7 +48,7 @@ class ETL_boletos_viz:
         listas_ponteiros_2 = df.loc[df['data_reemissao'] == day_offset_2, 'ponteiro'].tolist()
         listas_ponteiros_1 = df.loc[df['data_reemissao'] == day_offset_1, 'ponteiro'].tolist()
 
-        def calcular_pagamentos_4dias_3empresas(df, listas_ponteiros, empresas):
+        def calcular_pagamentos_4dias_4empresas(df, listas_ponteiros, empresas):
             resultados = {}
             for idx, ponteiros in enumerate(listas_ponteiros, 1):
                 for empresa in empresas:
@@ -56,18 +61,20 @@ class ETL_boletos_viz:
             return resultados
 
         listas_ponteiros = [listas_ponteiros_1, listas_ponteiros_2, listas_ponteiros_3, listas_ponteiros_4]
-        empresas = ['Segtruck', 'Stcoop', 'Viavante']
-        pagamentos = calcular_pagamentos_4dias_3empresas(df, listas_ponteiros, empresas)
+        empresas = ['Segtruck', 'Stcoop', 'Viavante', 'Tag']
+        pagamentos = calcular_pagamentos_4dias_4empresas(df, listas_ponteiros, empresas)
+        colunas = ['C', 'D', 'E', 'F']
 
-        colunas = ['F', 'I', 'L', 'O']
-        linhas = {'Segtruck': 4, 'Stcoop': 5, 'Viavante': 6}
-        empresas = ['Segtruck', 'Stcoop', 'Viavante']
-
-        for idx_col, coluna in enumerate(colunas):
-            idx_lista = 4 - idx_col
-            for empresa in empresas:
-                valor = pagamentos.get((empresa, idx_lista), 0)
-                linha = linhas[empresa]
+        datas_linhas = [
+            (yesterday, 6),
+            (dbf_yesterday, 10),
+            (dbf_yesterday_2, 14),
+            (dbf_yesterday_3, 18)
+        ]
+        
+        for idx, (data, linha) in enumerate(datas_linhas, 1):
+            for idx_col, (coluna, empresa) in enumerate(zip(colunas, empresas)):
+                valor = pagamentos.get((empresa, idx), 0)
                 ws3.range(f'{coluna}{linha}').value = valor
 
         # saving and closing excel files
